@@ -1,0 +1,10 @@
+crewai
+langchain-openai
+langchain-google-genai
+ddgs
+requests
+beautifulsoup4
+pdfplumber
+python-dotenv
+pandas
+regex~=2026.1.15
