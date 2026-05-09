@@ -1,8 +1,6 @@
-import os
-
 from crewai import Agent
 
-from llm_config import llm
+from llm_config import llm, tool_llm
 from tools.duckduckgo_jobs import search_apprenticeships, search_jobs_ddg
 from tools.remoteok_tool import search_remote_jobs
 from tools.resume_tool import read_my_resume
@@ -15,7 +13,6 @@ all_search_tools = [
     search_remote_jobs,
     search_usajobs,
 ]
-tool_llm = os.getenv("CREWAI_TOOL_LLM", "ollama/gpt-oss:20b")
 
 hunter = Agent(
     role="Job Hunter",

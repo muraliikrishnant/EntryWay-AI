@@ -4,13 +4,34 @@ import os
 import requests
 from crewai.tools import tool
 
-from tools.duckduckgo_jobs import _eligible_for_permanent_resident, _is_apprenticeship
+from tools.duckduckgo_jobs import _eligible_for_permanent_resident
 from tools.tracker_tool import (
     is_job_link_active,
     is_tracked_link,
     load_tracked_links,
     normalize_job_link,
 )
+
+FEDERAL_ENTRY_TERMS = (
+    "apprentice",
+    "apprenticeship",
+    "pathways",
+    "trainee",
+    "recent graduate",
+    "entry",
+    "junior",
+)
+
+
+def _is_federal_entry_level(record: dict) -> bool:
+    text = " ".join(
+        [
+            str(record.get("title", "")),
+            str(record.get("snippet", "")),
+            str(record.get("location", "")),
+        ]
+    ).lower()
+    return any(term in text for term in FEDERAL_ENTRY_TERMS)
 
 
 @tool("search_usajobs")
@@ -67,7 +88,7 @@ def search_usajobs(keyword: str) -> str:
             "snippet": d.get("QualificationSummary", ""),
             "source": "usajobs",
         }
-        if not _is_apprenticeship(record):
+        if not _is_federal_entry_level(record):
             continue
         if not _eligible_for_permanent_resident(record):
             continue

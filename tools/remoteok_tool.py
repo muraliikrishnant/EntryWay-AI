@@ -3,13 +3,34 @@ import json
 import requests
 from crewai.tools import tool
 
-from tools.duckduckgo_jobs import _eligible_for_permanent_resident, _is_apprenticeship
+from tools.duckduckgo_jobs import _eligible_for_permanent_resident
 from tools.tracker_tool import (
     is_job_link_active,
     is_tracked_link,
     load_tracked_links,
     normalize_job_link,
 )
+
+REMOTEOK_ENTRY_TERMS = (
+    "apprentice",
+    "apprenticeship",
+    "junior",
+    "entry",
+    "intern",
+    "graduate",
+    "trainee",
+)
+
+
+def _is_entry_level(record: dict) -> bool:
+    text = " ".join(
+        [
+            str(record.get("title", "")),
+            str(record.get("snippet", "")),
+            " ".join(record.get("tags") or []),
+        ]
+    ).lower()
+    return any(term in text for term in REMOTEOK_ENTRY_TERMS)
 
 
 @tool("search_remote_jobs")
@@ -46,7 +67,7 @@ def search_remote_jobs(tag: str) -> str:
             "snippet": " ".join(row.get("tags") or []),
             "source": "remoteok",
         }
-        if not _is_apprenticeship(record):
+        if not _is_entry_level(record):
             continue
         if not _eligible_for_permanent_resident(record):
             continue

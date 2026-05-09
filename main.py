@@ -1,11 +1,14 @@
+import argparse
 import datetime as dt
 import os
+import traceback
 
 from crewai import Crew, Process
 from dotenv import load_dotenv
 
 from agents import hunter, matcher, reporter, writer
 from tasks import create_tasks
+from tools.duckduckgo_jobs import search_apprenticeships
 
 load_dotenv()
 
@@ -21,13 +24,32 @@ def run() -> str:
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Test apprenticeship search tool without running full crew",
+    )
+    args = parser.parse_args()
+
     today = dt.date.today()
     print(f"\nRunning free job search agent — {today}\n")
-    result = run()
-
     os.makedirs("output", exist_ok=True)
-    report_path = f"output/report_{today}.md"
-    with open(report_path, "w", encoding="utf-8") as file:
-        file.write(result)
+    os.makedirs("logs", exist_ok=True)
+    os.makedirs("data", exist_ok=True)
 
-    print(f"\nDone. Report saved to {report_path}")
+    if args.dry_run:
+        print(search_apprenticeships.run("cybersecurity"))
+    else:
+        try:
+            result = run()
+            report_path = f"output/report_{today}.md"
+            with open(report_path, "w", encoding="utf-8") as file:
+                file.write(result)
+            print(f"\nDone. Report saved to {report_path}")
+        except Exception as exc:
+            error_path = f"logs/error_{today}.log"
+            with open(error_path, "w", encoding="utf-8") as file:
+                file.write(traceback.format_exc())
+            print(f"\nAgent failed: {exc}")
+            print(f"Error log saved to {error_path}")

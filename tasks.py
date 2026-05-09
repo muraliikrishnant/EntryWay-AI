@@ -16,7 +16,7 @@ Search internet-wide for apprenticeship-only roles posted recently (prefer last 
 You must:
 - prioritize web-wide sources (LinkedIn, Indeed, Glassdoor, employer ATS pages, job boards)
 - keep search scope to U.S.-wide and remote-friendly roles
-- exclude internships, new-grad, junior, and non-apprenticeship roles
+- exclude senior/unrelated roles, while allowing apprenticeship-equivalent federal/remote entry tracks
 - exclude jobs requiring U.S. citizenship only
 - keep jobs that are clearly friendly to permanent residents or do not impose citizenship-only constraints
 - skip any role whose link already exists in output/job_tracker.csv
@@ -80,6 +80,7 @@ Sections:
 5) Quick apply links
 
 For each score >= 45 role, call append_job_tracker with details so output is persisted to CSV.
+You MUST call append_job_tracker once for each qualifying role before writing the final report.
 """,
         expected_output=(
             "A markdown daily digest report with summary, ranked matches, cover letters, "

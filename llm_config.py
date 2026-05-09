@@ -18,4 +18,12 @@ def get_llm():
     raise ValueError("LLM_PROVIDER must be one of: ollama, openrouter, google")
 
 
+def get_tool_llm():
+    provider = os.getenv("LLM_PROVIDER", "ollama").lower().strip()
+    if provider == "ollama":
+        return os.getenv("CREWAI_TOOL_LLM", "ollama/gpt-oss:20b")
+    return get_llm()
+
+
 llm = get_llm()
+tool_llm = get_tool_llm()
