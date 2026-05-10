@@ -6,10 +6,17 @@ from crewai.tools import tool
 
 from tools.tracker_tool import is_job_link_active, is_tracked_link, normalize_job_link
 
-APPRENTICESHIP_TERMS = (
-    "apprentice",
-    "apprenticeship",
-    "apprenticeships",
+ENTRY_LEVEL_TERMS = (
+    "entry level",
+    "entry-level",
+    "associate",
+    "junior",
+    "jr",
+    "level 1",
+    "level i",
+    "new grad",
+    "new graduate",
+    "trainee",
 )
 DISQUALIFY_CITIZEN_ONLY_TERMS = (
     "u.s. citizen",
@@ -52,7 +59,6 @@ JOB_PAGE_HINTS = (
     "apply",
     "position",
     "opening",
-    "apprentice program",
     "job_url",
 )
 NON_DIRECT_JOB_URL_PATTERNS = (
@@ -81,9 +87,9 @@ def _joined_text(record: dict) -> str:
     ).lower()
 
 
-def _is_apprenticeship(record: dict) -> bool:
+def _is_entry_level(record: dict) -> bool:
     text = _joined_text(record)
-    return any(term in text for term in APPRENTICESHIP_TERMS)
+    return any(term in text for term in ENTRY_LEVEL_TERMS)
 
 
 def _is_likely_job_posting(record: dict) -> bool:
@@ -135,7 +141,7 @@ def _run_search(
                     continue
                 if is_tracked_link(link, tracked_links):
                     continue
-                if not _is_apprenticeship(record):
+                if not _is_entry_level(record):
                     continue
                 if not _is_likely_job_posting(record):
                     continue
@@ -159,7 +165,7 @@ def search_jobs_ddg(query: str) -> str:
     Search jobs using DuckDuckGo text search, no API key required.
     """
     max_results = int(os.getenv("TOP_N_JOBS", "10"))
-    full_query = f"{query} apprenticeship"
+    full_query = f"{query} entry level OR junior OR associate OR \"level 1\""
     tracked_links: set[str] = set()
     availability_cache: dict[str, bool] = {}
     try:
@@ -179,19 +185,19 @@ def search_jobs_ddg(query: str) -> str:
     )
 
 
-@tool("search_apprenticeships")
-def search_apprenticeships(field: str) -> str:
+@tool("search_entry_level_roles")
+def search_entry_level_roles(field: str) -> str:
     """
-    Search apprenticeship roles across the internet for a field.
+    Search entry-level roles across the internet for a field.
     Excludes obvious citizen-only roles and keeps permanent-resident-friendly results.
     """
     max_results = max(5, int(os.getenv("TOP_N_JOBS", "10")))
     queries = [
-        f"{field} apprenticeship",
-        f"{field} apprentice",
-        f"{field} apprenticeship program",
-        f"{field} apprenticeship jobs",
-        f"{field} apprenticeship not citizen only",
+        f"{field} entry level",
+        f"{field} associate",
+        f"{field} junior",
+        f"{field} level 1",
+        f"{field} entry level not citizen only",
     ]
     internet_sources = [
         "",
@@ -228,11 +234,3 @@ def search_apprenticeships(field: str) -> str:
                 seen_links.add(link)
                 merged.append(record)
     return json.dumps(merged, indent=2)
-
-
-@tool("search_internships")
-def search_internships(field: str) -> str:
-    """
-    Backward-compatible alias. Delegates to apprenticeship-only search.
-    """
-    return search_apprenticeships.run(field)

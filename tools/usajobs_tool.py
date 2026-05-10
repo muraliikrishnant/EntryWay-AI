@@ -13,13 +13,17 @@ from tools.tracker_tool import (
 )
 
 FEDERAL_ENTRY_TERMS = (
-    "apprentice",
-    "apprenticeship",
-    "pathways",
+    "associate",
+    "junior",
+    "entry level",
+    "entry-level",
+    "level 1",
+    "level i",
+    "gs-5",
+    "gs-7",
     "trainee",
     "recent graduate",
     "entry",
-    "junior",
 )
 
 

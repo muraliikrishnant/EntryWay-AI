@@ -7,16 +7,16 @@ def create_tasks(hunter, matcher, writer, reporter):
     today = dt.date.today()
     t1 = Task(
         description="""
-Search internet-wide for apprenticeship-only roles posted recently (prefer last 10 days):
-1) cybersecurity apprenticeship
-2) software development apprenticeship
-3) web development apprenticeship
-4) network engineer apprenticeship
+Search internet-wide for entry-level roles posted recently (prefer last 10 days):
+1) cybersecurity entry level / junior / associate / level 1
+2) software development entry level / junior / associate / level 1
+3) web development entry level / junior / associate / level 1
+4) network engineer entry level / junior / associate / level 1
 
 You must:
 - prioritize web-wide sources (LinkedIn, Indeed, Glassdoor, employer ATS pages, job boards)
 - keep search scope to U.S.-wide and remote-friendly roles
-- exclude senior/unrelated roles, while allowing apprenticeship-equivalent federal/remote entry tracks
+- exclude senior/unrelated roles
 - exclude jobs requiring U.S. citizenship only
 - keep jobs that are clearly friendly to permanent residents or do not impose citizenship-only constraints
 - skip any role whose link already exists in output/job_tracker.csv

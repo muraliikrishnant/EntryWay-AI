@@ -12,9 +12,13 @@ from tools.tracker_tool import (
 )
 
 REMOTEOK_ENTRY_TERMS = (
-    "apprentice",
-    "apprenticeship",
+    "associate",
     "junior",
+    "jr",
+    "level 1",
+    "level i",
+    "entry level",
+    "entry-level",
     "entry",
     "intern",
     "graduate",

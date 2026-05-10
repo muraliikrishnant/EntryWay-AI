@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 from agents import hunter, matcher, reporter, writer
 from tasks import create_tasks
-from tools.duckduckgo_jobs import search_apprenticeships
+from tools.duckduckgo_jobs import search_entry_level_roles
 
 load_dotenv()
 
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Test apprenticeship search tool without running full crew",
+        help="Test entry-level search tool without running full crew",
     )
     args = parser.parse_args()
 
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     os.makedirs("data", exist_ok=True)
 
     if args.dry_run:
-        print(search_apprenticeships.run("cybersecurity"))
+        print(search_entry_level_roles.run("cybersecurity"))
     else:
         try:
             result = run()
