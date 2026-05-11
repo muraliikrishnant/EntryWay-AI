@@ -164,8 +164,7 @@ def is_job_link_active(
     return True
 
 
-@tool("append_job_tracker")
-def append_job_tracker(
+def append_job_tracker_row(
     title: str,
     company: str,
     location: str,
@@ -178,9 +177,6 @@ def append_job_tracker(
     top_gap: str = "",
     session_date: str = "",
 ) -> str:
-    """
-    Append one job row into local CSV tracker.
-    """
     _ensure_tracker()
     normalized = normalize_job_link(apply_link)
     if is_tracked_link(apply_link):
@@ -206,3 +202,35 @@ def append_job_tracker(
             }
         )
     return f"Saved: {title} at {company}"
+
+
+@tool("append_job_tracker")
+def append_job_tracker(
+    title: str,
+    company: str,
+    location: str,
+    score: str,
+    apply_link: str,
+    status: str = "New",
+    notes: str = "",
+    mock_score: str = "",
+    star_score: str = "",
+    top_gap: str = "",
+    session_date: str = "",
+) -> str:
+    """
+    Append one job row into local CSV tracker.
+    """
+    return append_job_tracker_row(
+        title=title,
+        company=company,
+        location=location,
+        score=score,
+        apply_link=apply_link,
+        status=status,
+        notes=notes,
+        mock_score=mock_score,
+        star_score=star_score,
+        top_gap=top_gap,
+        session_date=session_date,
+    )

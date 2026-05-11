@@ -1,38 +1,81 @@
 import argparse
 import datetime as dt
 import os
+import time
 import traceback
 
 from crewai import Crew, Process
 from dotenv import load_dotenv
 
-from agents import hunter, matcher, outreach, reporter, writer
+from agents import hunter, matcher, writer
 from tasks import create_tasks
 from tools.answer_builder import build_star_feedback
 from tools.answer_scorer import build_answer_scorecard
 from tools.duckduckgo_jobs import search_entry_level_roles
 from tools.interview_utils import read_json, write_json
 from tools.mock_interview import generate_mock_questions, save_mock_session
+from tools.report_builder import build_daily_digest
 from tools.resume_tool import read_my_resume
 from tools.weekly_report import generate_weekly_report
 
 load_dotenv()
 
 
+def _is_transient_llm_error(error: Exception) -> bool:
+    message = str(error).lower()
+    transient_markers = (
+        "error code: 500",
+        "internal server error",
+        "error code: 502",
+        "error code: 503",
+        "error code: 504",
+        "error code: 429",
+        "rate limit",
+        "timed out",
+        "timeout",
+        "connection reset",
+        "service unavailable",
+    )
+    return any(marker in message for marker in transient_markers)
+
+
+def _kickoff_with_retries(crew: Crew):
+    max_attempts = max(1, int(os.getenv("CREW_MAX_RETRIES", "3")))
+    base_delay = max(0.1, float(os.getenv("CREW_RETRY_BASE_SECONDS", "2")))
+    max_delay = max(base_delay, float(os.getenv("CREW_RETRY_MAX_SECONDS", "30")))
+
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return crew.kickoff()
+        except Exception as exc:
+            should_retry = _is_transient_llm_error(exc) and attempt < max_attempts
+            if not should_retry:
+                raise
+            delay = min(max_delay, base_delay * (2 ** (attempt - 1)))
+            print(
+                f"Transient LLM error on attempt {attempt}/{max_attempts}: {exc}. "
+                f"Retrying in {delay:.1f}s..."
+            )
+            time.sleep(delay)
+
+
 def run() -> str:
-    tasks = create_tasks(hunter, matcher, writer, reporter, outreach)
+    tasks = create_tasks(hunter, matcher, writer, include_report=False)
     crew = Crew(
-        agents=[hunter, matcher, writer, reporter, outreach],
+        agents=[hunter, matcher, writer],
         tasks=tasks,
         process=Process.sequential,
         verbose=True,
     )
-    result = crew.kickoff()
-    for task_output in reversed(getattr(result, "tasks_output", []) or []):
-        raw = str(getattr(task_output, "raw", "") or "")
-        if raw.lstrip().startswith("# Job Search Daily Digest"):
-            return raw
-    return str(result)
+    result = _kickoff_with_retries(crew)
+    outputs = getattr(result, "tasks_output", []) or []
+    if len(outputs) < 2:
+        return str(result)
+    jobs_text = str(getattr(outputs[0], "raw", "") or "")
+    scored_text = str(getattr(outputs[1], "raw", "") or "")
+    cover_letters_text = str(getattr(outputs[2], "raw", "") or "") if len(outputs) > 2 else ""
+    digest, _outreach_paths = build_daily_digest(jobs_text, scored_text, cover_letters_text)
+    return digest
 
 
 if __name__ == "__main__":

@@ -81,6 +81,28 @@ def extract_json_object(text: str) -> dict[str, Any] | None:
         return None
 
 
+def extract_json_array(text: str) -> list[Any] | None:
+    if not text:
+        return None
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned)
+        cleaned = re.sub(r"\s*```$", "", cleaned)
+    try:
+        parsed = json.loads(cleaned)
+        return parsed if isinstance(parsed, list) else None
+    except json.JSONDecodeError:
+        pass
+    match = re.search(r"\[.*\]", text, flags=re.S)
+    if not match:
+        return None
+    try:
+        parsed = json.loads(match.group(0))
+        return parsed if isinstance(parsed, list) else None
+    except json.JSONDecodeError:
+        return None
+
+
 def call_llm(prompt: str, *, temperature: float = 0.2) -> str | None:
     """
     Best-effort direct LLM call for CLI tools.

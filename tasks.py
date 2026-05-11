@@ -3,7 +3,7 @@ import datetime as dt
 from crewai import Task
 
 
-def create_tasks(hunter, matcher, writer, reporter, outreach=None):
+def create_tasks(hunter, matcher, writer, reporter=None, outreach=None, include_report: bool = True):
     today = dt.date.today()
     t1 = Task(
         description="""
@@ -74,6 +74,14 @@ For each role with score >= 65:
         context=[t2],
     )
 
+    tasks = [t1, t2, t3]
+
+    if not include_report:
+        return tasks
+
+    if reporter is None:
+        raise ValueError("reporter is required when include_report=True")
+
     t4 = Task(
         description=f"""
 Create markdown digest titled: Job Search Daily Digest — {today}
@@ -96,7 +104,7 @@ You MUST call append_job_tracker once for each qualifying role before writing th
         context=[t1, t2, t3],
     )
 
-    tasks = [t1, t2, t3, t4]
+    tasks.append(t4)
 
     if outreach is not None:
         t5 = Task(
