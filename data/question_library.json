@@ -1,0 +1,51 @@
+{
+  "behavioral": [
+    "Tell me about a time you debugged a critical issue under time pressure.",
+    "Describe a project where you had to learn a new technology quickly.",
+    "Tell me about a time you received difficult feedback and how you responded.",
+    "Describe a time you had to communicate a technical issue to a non-technical audience.",
+    "Tell me about a time you worked with a team to deliver a project."
+  ],
+  "situational": [
+    "What would you do if you were assigned a task with unclear requirements?",
+    "How would you handle discovering a security issue shortly before a deadline?",
+    "How would you prioritize several urgent tickets from different stakeholders?",
+    "What would you do if your implementation passed locally but failed in production?",
+    "How would you approach learning a tool required for this role that you have not used before?"
+  ],
+  "technical": [
+    "How do you troubleshoot a system that is slow but not failing?",
+    "Explain how you would test a new feature before releasing it.",
+    "What steps do you take to protect sensitive data in an application?",
+    "How do you decide whether to automate a manual process?",
+    "What information do you collect before escalating a technical issue?"
+  ],
+  "cybersecurity": [
+    "What is a buffer overflow, and how do you prevent it?",
+    "Explain the difference between vulnerability, threat, and risk.",
+    "How would you investigate a suspicious login alert?",
+    "What is least privilege, and why does it matter?",
+    "How do hashing and encryption differ?"
+  ],
+  "software_dev": [
+    "Explain REST vs GraphQL tradeoffs.",
+    "How do you structure a small service so it is easy to test?",
+    "What is the difference between unit, integration, and end-to-end testing?",
+    "How do you debug a failing API request?",
+    "Describe how you use version control in a team project."
+  ],
+  "web_dev": [
+    "How do you make a web page responsive across screen sizes?",
+    "What causes slow page loads, and how would you improve them?",
+    "Explain the difference between client-side and server-side rendering.",
+    "How do you handle form validation securely?",
+    "What accessibility checks do you include before shipping a page?"
+  ],
+  "networking": [
+    "Walk me through the TCP three-way handshake.",
+    "How would you troubleshoot intermittent network connectivity?",
+    "What is DNS, and what happens when it fails?",
+    "Explain the difference between TCP and UDP.",
+    "How do subnets help organize a network?"
+  ]
+}

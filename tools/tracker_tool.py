@@ -16,6 +16,10 @@ HEADERS = [
     "status",
     "apply_link",
     "notes",
+    "mock_score",
+    "star_score",
+    "top_gap",
+    "session_date",
 ]
 UNAVAILABLE_PAGE_TERMS = (
     "job is no longer available",
@@ -66,6 +70,20 @@ def _ensure_tracker() -> None:
         with open(TRACKER_PATH, "w", newline="", encoding="utf-8") as file:
             writer = csv.DictWriter(file, fieldnames=HEADERS)
             writer.writeheader()
+        return
+
+    with open(TRACKER_PATH, "r", newline="", encoding="utf-8") as file:
+        reader = csv.DictReader(file)
+        existing_headers = reader.fieldnames or []
+        if all(header in existing_headers for header in HEADERS):
+            return
+        rows = list(reader)
+
+    with open(TRACKER_PATH, "w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=HEADERS)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({header: row.get(header, "") for header in HEADERS})
 
 
 def load_tracked_links() -> set[str]:
@@ -155,6 +173,10 @@ def append_job_tracker(
     apply_link: str,
     status: str = "New",
     notes: str = "",
+    mock_score: str = "",
+    star_score: str = "",
+    top_gap: str = "",
+    session_date: str = "",
 ) -> str:
     """
     Append one job row into local CSV tracker.
@@ -177,6 +199,10 @@ def append_job_tracker(
                 "status": status,
                 "apply_link": normalized or apply_link,
                 "notes": notes,
+                "mock_score": mock_score,
+                "star_score": star_score,
+                "top_gap": top_gap,
+                "session_date": session_date,
             }
         )
     return f"Saved: {title} at {company}"

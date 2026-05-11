@@ -9,7 +9,10 @@ def read_my_resume(path: str = "") -> str:
     """
     Extract text from a resume PDF.
     """
-    file_path = path or os.getenv("RESUME_PATH", "data/my_resume.pdf")
+    configured_path = os.getenv("RESUME_PATH", "data/my_resume.pdf")
+    file_path = path or configured_path
+    if path and not os.path.exists(file_path):
+        file_path = configured_path
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Resume not found at: {file_path}")
 
