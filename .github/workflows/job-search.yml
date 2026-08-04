@@ -3,7 +3,16 @@ name: Daily job search
 on:
   schedule:
     - cron: "0 13 * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      resume_filename:
+        description: "Resume file under data/resumes/ to use (leave blank for default)"
+        required: false
+        type: string
+      keywords:
+        description: "Comma-separated role keywords to search (leave blank for default 3 categories)"
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -19,7 +28,8 @@ jobs:
       USAJOBS_API_KEY: ${{ secrets.USAJOBS_API_KEY }}
       USAJOBS_EMAIL: ${{ secrets.USAJOBS_EMAIL }}
       CLEANJOBDATA: ${{ secrets.CLEANJOBDATA }}
-      RESUME_PATH: "data/Muralii_Krishnan_Thirumalai_Resume copy.pdf"
+      RESUME_PATH: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.resume_filename != '') && format('data/resumes/{0}', github.event.inputs.resume_filename) || 'data/Muralii_Krishnan_Thirumalai_Resume copy.pdf' }}
+      SEARCH_KEYWORDS: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.keywords) || '' }}
       TOP_N_JOBS: "15"
       SEARCH_LOOKBACK_DAYS: "10"
     steps:

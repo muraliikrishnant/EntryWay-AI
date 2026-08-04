@@ -94,6 +94,41 @@
     font-weight: 600;
   }
   .updated { color: var(--muted); font-size: 0.78rem; margin-top: 0.75rem; }
+
+  .panel-box {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+    padding: 1rem 1.1rem;
+    margin-bottom: 1.25rem;
+  }
+  .panel-box h2 { font-size: 1rem; margin: 0 0 0.75rem; }
+  .field-row { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; margin-bottom: 0.6rem; }
+  .field-row label { font-size: 0.8rem; color: var(--muted); min-width: 110px; }
+  input[type="password"], input[type="text"], select {
+    flex: 1;
+    min-width: 180px;
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.85rem;
+  }
+  button.action {
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+    border: 1px solid var(--accent);
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  button.action:disabled { opacity: 0.5; cursor: not-allowed; }
+  .status-msg { font-size: 0.8rem; margin-top: 0.5rem; color: var(--muted); }
+  .status-msg.error { color: #dc2626; }
+  .status-msg.ok { color: #16a34a; }
 </style>
 </head>
 <body>
@@ -102,6 +137,33 @@
   <div class="sub">Entry-level (0–1 yr) Solution Engineering, Solutions Architect &amp; Developer Relations roles</div>
 </header>
 <main>
+  <div class="panel-box">
+    <h2>Run a new search</h2>
+    <div class="field-row">
+      <label for="pw">Password</label>
+      <input type="password" id="pw" placeholder="site password" autocomplete="current-password" />
+    </div>
+    <div class="field-row">
+      <label for="resumeFile">Upload resume</label>
+      <input type="file" id="resumeFile" accept="application/pdf" />
+      <button class="action" id="uploadBtn">Upload</button>
+    </div>
+    <div class="field-row">
+      <label for="resumeSelect">Use resume</label>
+      <select id="resumeSelect"><option value="">Default resume</option></select>
+      <button class="action" id="refreshResumesBtn" type="button">Refresh list</button>
+    </div>
+    <div class="field-row">
+      <label for="keywords">Role keywords</label>
+      <input type="text" id="keywords" placeholder="e.g. product manager, technical account manager (leave blank for default 3 categories)" />
+    </div>
+    <div class="field-row">
+      <button class="action" id="runBtn">Run Now</button>
+      <button class="action" id="statusBtn" type="button">Check last run status</button>
+    </div>
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+
   <div class="tabs" id="tabs"></div>
   <div id="panels"></div>
   <div class="updated" id="updated"></div>
@@ -111,6 +173,7 @@
     { key: "solution_engineering", label: "Solution Engineering", file: "data/jobs_solution_engineering.csv" },
     { key: "solutions_architect", label: "Solutions Architect", file: "data/jobs_solutions_architect.csv" },
     { key: "developer_relations", label: "Developer Relations", file: "data/jobs_developer_relations.csv" },
+    { key: "other", label: "Other / Custom Search", file: "data/jobs_other.csv" },
   ];
 
   function parseCSV(text) {
@@ -206,6 +269,114 @@
   }
 
   init();
+
+  // --- Control panel: password, resume upload/select, run trigger, status ---
+  const PW_STORAGE_KEY = "entryway_site_password";
+  const pwInput = document.getElementById("pw");
+  const statusMsg = document.getElementById("statusMsg");
+  const resumeSelect = document.getElementById("resumeSelect");
+
+  pwInput.value = localStorage.getItem(PW_STORAGE_KEY) || "";
+
+  function setStatus(text, kind) {
+    statusMsg.textContent = text;
+    statusMsg.className = "status-msg" + (kind ? ` ${kind}` : "");
+  }
+
+  function currentPassword() {
+    const value = pwInput.value.trim();
+    if (value) localStorage.setItem(PW_STORAGE_KEY, value);
+    return value;
+  }
+
+  function toBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function loadResumes() {
+    try {
+      const res = await fetch("/api/resumes");
+      const data = await res.json();
+      resumeSelect.innerHTML = '<option value="">Default resume</option>';
+      (data.resumes || []).forEach((name) => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        resumeSelect.appendChild(opt);
+      });
+    } catch {
+      setStatus("Could not load resume list.", "error");
+    }
+  }
+
+  document.getElementById("refreshResumesBtn").onclick = loadResumes;
+
+  document.getElementById("uploadBtn").onclick = async () => {
+    const password = currentPassword();
+    if (!password) return setStatus("Enter the site password first.", "error");
+    const fileInput = document.getElementById("resumeFile");
+    const file = fileInput.files[0];
+    if (!file) return setStatus("Choose a PDF file first.", "error");
+    setStatus("Uploading resume...");
+    try {
+      const fileBase64 = await toBase64(file);
+      const res = await fetch("/api/resumes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Site-Password": password },
+        body: JSON.stringify({ filename: file.name, fileBase64 }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+      setStatus(`Uploaded ${data.filename}.`, "ok");
+      await loadResumes();
+      resumeSelect.value = data.filename;
+    } catch (err) {
+      setStatus(err.message || "Upload failed.", "error");
+    }
+  };
+
+  document.getElementById("runBtn").onclick = async () => {
+    const password = currentPassword();
+    if (!password) return setStatus("Enter the site password first.", "error");
+    setStatus("Triggering run...");
+    try {
+      const res = await fetch("/api/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Site-Password": password },
+        body: JSON.stringify({
+          resumeFilename: resumeSelect.value || "",
+          keywords: document.getElementById("keywords").value.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Trigger failed");
+      setStatus("Run triggered — this can take several minutes. Use “Check last run status” or refresh the page later.", "ok");
+    } catch (err) {
+      setStatus(err.message || "Trigger failed.", "error");
+    }
+  };
+
+  document.getElementById("statusBtn").onclick = async () => {
+    setStatus("Checking...");
+    try {
+      const res = await fetch("/api/status");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Status check failed");
+      if (data.status === "none") return setStatus("No runs yet.");
+      setStatus(
+        `Last run: ${data.status}${data.conclusion ? " (" + data.conclusion + ")" : ""} — started ${data.created_at}`
+      );
+    } catch (err) {
+      setStatus(err.message || "Status check failed.", "error");
+    }
+  };
+
+  loadResumes();
 </script>
 </body>
 </html>

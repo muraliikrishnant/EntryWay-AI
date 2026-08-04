@@ -1,16 +1,33 @@
 import datetime as dt
+import os
 
 from crewai import Task
+
+DEFAULT_ROLES = [
+    "solution engineer / solutions engineer",
+    "solution architect / solutions architect",
+    "developer relations / developer advocate",
+]
+
+
+def _search_roles() -> list[str]:
+    keywords = os.getenv("SEARCH_KEYWORDS", "").strip()
+    if not keywords:
+        return DEFAULT_ROLES
+    return [term.strip() for term in keywords.split(",") if term.strip()] or DEFAULT_ROLES
 
 
 def create_tasks(hunter, matcher, writer, reporter=None, outreach=None, include_report: bool = True):
     today = dt.date.today()
+    roles = _search_roles()
+    role_lines = "\n".join(
+        f"{index}) {role} entry level / junior / associate / level 1"
+        for index, role in enumerate(roles, start=1)
+    )
     t1 = Task(
-        description="""
+        description=f"""
 Search internet-wide for entry-level roles posted recently (prefer last 10 days):
-1) solution engineer / solutions engineer entry level / junior / associate / level 1
-2) solution architect / solutions architect entry level / junior / associate / level 1
-3) developer relations / developer advocate entry level / junior / associate / level 1
+{role_lines}
 
 You must:
 - prioritize web-wide sources (LinkedIn, Indeed, Glassdoor, employer ATS pages, job boards)
