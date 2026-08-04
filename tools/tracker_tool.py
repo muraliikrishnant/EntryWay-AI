@@ -114,10 +114,10 @@ def _ensure_dashboard_csv(category: str) -> str:
     return path
 
 
-def load_tracked_links() -> set[str]:
-    _ensure_tracker()
-    links: set[str] = set()
-    with open(TRACKER_PATH, "r", newline="", encoding="utf-8") as file:
+def _collect_links_from_csv(path: str, links: set[str]) -> None:
+    if not os.path.exists(path):
+        return
+    with open(path, "r", newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         for row in reader:
             raw = (row.get("apply_link") or "").strip()
@@ -126,6 +126,18 @@ def load_tracked_links() -> set[str]:
                 links.add(normalized)
             if raw:
                 links.add(raw)
+
+
+def load_tracked_links() -> set[str]:
+    _ensure_tracker()
+    links: set[str] = set()
+    _collect_links_from_csv(TRACKER_PATH, links)
+    # site/data/*.csv is git-tracked and shared across machines/CI, unlike the
+    # gitignored TRACKER_PATH, so it's the only reliable cross-environment
+    # record of jobs already surfaced on the dashboard.
+    if os.path.isdir(DASHBOARD_DATA_DIR):
+        for category in (*ROLE_CATEGORIES.keys(), OTHER_CATEGORY):
+            _collect_links_from_csv(_dashboard_csv_path(category), links)
     return links
 
 
