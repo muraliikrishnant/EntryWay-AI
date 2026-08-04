@@ -368,9 +368,10 @@
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Status check failed");
       if (data.status === "none") return setStatus("No runs yet.");
-      setStatus(
-        `Last run: ${data.status}${data.conclusion ? " (" + data.conclusion + ")" : ""} — started ${data.created_at}`
-      );
+      statusMsg.innerHTML =
+        `Last run: ${data.status}${data.conclusion ? " (" + data.conclusion + ")" : ""} — started ${data.created_at}` +
+        (data.html_url ? ` — <a href="${data.html_url}" target="_blank" rel="noopener">view logs</a>` : "");
+      statusMsg.className = "status-msg" + (data.conclusion === "failure" ? " error" : data.conclusion === "success" ? " ok" : "");
     } catch (err) {
       setStatus(err.message || "Status check failed.", "error");
     }
