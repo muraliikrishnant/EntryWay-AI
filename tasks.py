@@ -8,15 +8,17 @@ def create_tasks(hunter, matcher, writer, reporter=None, outreach=None, include_
     t1 = Task(
         description="""
 Search internet-wide for entry-level roles posted recently (prefer last 10 days):
-1) cybersecurity entry level / junior / associate / level 1
-2) software development entry level / junior / associate / level 1
-3) web development entry level / junior / associate / level 1
-4) network engineer entry level / junior / associate / level 1
+1) solution engineer / solutions engineer entry level / junior / associate / level 1
+2) solution architect / solutions architect entry level / junior / associate / level 1
+3) developer relations / developer advocate entry level / junior / associate / level 1
 
 You must:
 - prioritize web-wide sources (LinkedIn, Indeed, Glassdoor, employer ATS pages, job boards)
+- also call search_jobdataapi once per role (it has a very tight rate limit, so call it
+  sparingly — one query per role, not per variant)
 - keep search scope to U.S.-wide and remote-friendly roles
-- exclude senior/unrelated roles
+- only keep roles requiring a maximum of 1 year of professional experience (0-1 YOE);
+  exclude any role that asks for 2+ years of experience or "senior"/"mid-level" roles
 - exclude jobs requiring U.S. citizenship only
 - keep jobs that are clearly friendly to permanent residents or do not impose citizenship-only constraints
 - skip any role whose link already exists in output/job_tracker.csv

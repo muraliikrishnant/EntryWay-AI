@@ -18,6 +18,28 @@ ENTRY_LEVEL_TERMS = (
     "new graduate",
     "trainee",
 )
+EXPERIENCE_DISQUALIFY_TERMS = (
+    "2+ years",
+    "2 - 5 years",
+    "2-5 years",
+    "3+ years",
+    "3-5 years",
+    "4+ years",
+    "5+ years",
+    "5-7 years",
+    "minimum 2 years",
+    "minimum of 2 years",
+    "minimum 3 years",
+    "minimum of 3 years",
+    "at least 2 years",
+    "at least 3 years",
+    "2 to 5 years",
+    "3 to 5 years",
+    "senior level",
+    "senior-level",
+    "mid-level",
+    "mid level",
+)
 DISQUALIFY_CITIZEN_ONLY_TERMS = (
     "u.s. citizen",
     "us citizen",
@@ -89,7 +111,9 @@ def _joined_text(record: dict) -> str:
 
 def _is_entry_level(record: dict) -> bool:
     text = _joined_text(record)
-    return any(term in text for term in ENTRY_LEVEL_TERMS)
+    if not any(term in text for term in ENTRY_LEVEL_TERMS):
+        return False
+    return not any(term in text for term in EXPERIENCE_DISQUALIFY_TERMS)
 
 
 def _is_likely_job_posting(record: dict) -> bool:

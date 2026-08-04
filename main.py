@@ -16,6 +16,7 @@ from tools.interview_utils import read_json, write_json
 from tools.mock_interview import generate_mock_questions, save_mock_session
 from tools.report_builder import build_daily_digest
 from tools.resume_tool import read_my_resume
+from tools.story2star import build_story2star_coaching, render_story2star_markdown
 from tools.weekly_report import generate_weekly_report
 
 load_dotenv()
@@ -101,6 +102,11 @@ if __name__ == "__main__":
         help="Score one interview answer with the AI answer scorecard",
     )
     parser.add_argument(
+        "--story2star",
+        action="store_true",
+        help="Turn a rough experience into a polished Story2STAR interview coaching result",
+    )
+    parser.add_argument(
         "--add-question",
         action="store_true",
         help="Add a custom practice question to data/custom_questions.json",
@@ -123,7 +129,7 @@ if __name__ == "__main__":
     os.makedirs("data", exist_ok=True)
 
     if args.dry_run:
-        print(search_entry_level_roles.run("cybersecurity"))
+        print(search_entry_level_roles.run("solution engineering"))
     elif args.add_question:
         question = input("Question: ").strip()
         tag = input("Role tag (e.g. cybersecurity): ").strip()
@@ -158,6 +164,32 @@ if __name__ == "__main__":
             lines.append(line)
         keyword_list = [keyword.strip() for keyword in keywords.split(",") if keyword.strip()]
         print(build_answer_scorecard(question, "\n".join(lines), keyword_list or None))
+    elif args.story2star:
+        skill_focus = input("Skill focus (e.g. Leadership, Problem Solving): ").strip()
+        target_role = input("Target role (default General / Any Role): ").strip() or "General / Any Role"
+        answer_length = input("Answer length (Detailed or Concise): ").strip() or "Detailed"
+        print("Raw story. Finish with a blank line:")
+        lines = []
+        while True:
+            line = input()
+            if not line:
+                break
+            lines.append(line)
+        result = build_story2star_coaching(
+            "\n".join(lines),
+            skill_focus,
+            target_role,
+            answer_length,
+        )
+        markdown = render_story2star_markdown(result)
+        saved_path = result.get("metadata", {}).get("savedPath", "")
+        if saved_path:
+            markdown_path = saved_path.replace(".json", ".md")
+            with open(markdown_path, "w", encoding="utf-8") as file:
+                file.write(markdown)
+            print(f"\nSaved JSON to {saved_path}")
+            print(f"Saved coaching notes to {markdown_path}\n")
+        print(markdown)
     elif args.mock_interview:
         job_title = input("Job title: ").strip()
         company = input("Company: ").strip()

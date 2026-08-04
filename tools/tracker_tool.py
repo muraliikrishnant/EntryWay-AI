@@ -7,6 +7,13 @@ import requests
 from crewai.tools import tool
 
 TRACKER_PATH = "output/job_tracker.csv"
+DASHBOARD_DATA_DIR = "site/data"
+ROLE_CATEGORIES: dict[str, tuple[str, ...]] = {
+    "solution_engineering": ("solution engineer", "solutions engineer", "sales engineer"),
+    "solutions_architect": ("solution architect", "solutions architect"),
+    "developer_relations": ("developer relations", "developer advocate", "devrel", "dev rel"),
+}
+OTHER_CATEGORY = "other"
 HEADERS = [
     "date_found",
     "title",
@@ -84,6 +91,27 @@ def _ensure_tracker() -> None:
         writer.writeheader()
         for row in rows:
             writer.writerow({header: row.get(header, "") for header in HEADERS})
+
+
+def classify_role_category(title: str) -> str:
+    text = (title or "").lower()
+    for category, terms in ROLE_CATEGORIES.items():
+        if any(term in text for term in terms):
+            return category
+    return OTHER_CATEGORY
+
+
+def _dashboard_csv_path(category: str) -> str:
+    return f"{DASHBOARD_DATA_DIR}/jobs_{category}.csv"
+
+
+def _ensure_dashboard_csv(category: str) -> str:
+    os.makedirs(DASHBOARD_DATA_DIR, exist_ok=True)
+    path = _dashboard_csv_path(category)
+    if not os.path.exists(path):
+        with open(path, "w", newline="", encoding="utf-8") as file:
+            csv.DictWriter(file, fieldnames=HEADERS).writeheader()
+    return path
 
 
 def load_tracked_links() -> set[str]:
@@ -183,24 +211,28 @@ def append_job_tracker_row(
         return f"Skipped duplicate: {title} at {company}"
     if not is_job_link_active(normalized or apply_link):
         return f"Skipped inactive link: {title} at {company}"
+    row = {
+        "date_found": str(dt.date.today()),
+        "title": title,
+        "company": company,
+        "location": location,
+        "score": score,
+        "status": status,
+        "apply_link": normalized or apply_link,
+        "notes": notes,
+        "mock_score": mock_score,
+        "star_score": star_score,
+        "top_gap": top_gap,
+        "session_date": session_date,
+    }
     with open(TRACKER_PATH, "a", newline="", encoding="utf-8") as file:
-        writer = csv.DictWriter(file, fieldnames=HEADERS)
-        writer.writerow(
-            {
-                "date_found": str(dt.date.today()),
-                "title": title,
-                "company": company,
-                "location": location,
-                "score": score,
-                "status": status,
-                "apply_link": normalized or apply_link,
-                "notes": notes,
-                "mock_score": mock_score,
-                "star_score": star_score,
-                "top_gap": top_gap,
-                "session_date": session_date,
-            }
-        )
+        csv.DictWriter(file, fieldnames=HEADERS).writerow(row)
+
+    category = classify_role_category(title)
+    dashboard_path = _ensure_dashboard_csv(category)
+    with open(dashboard_path, "a", newline="", encoding="utf-8") as file:
+        csv.DictWriter(file, fieldnames=HEADERS).writerow(row)
+
     return f"Saved: {title} at {company}"
 
 

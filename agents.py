@@ -5,6 +5,7 @@ from tools.answer_builder import build_star_answer
 from tools.answer_scorer import score_mock_answer
 from tools.cover_letter_tool import save_cover_letter
 from tools.duckduckgo_jobs import search_entry_level_roles, search_jobs_ddg
+from tools.jobdataapi_tool import search_jobdataapi
 from tools.lesson_generator import generate_lesson
 from tools.mock_interview import run_mock_interview
 from tools.outreach_generator import generate_outreach
@@ -13,12 +14,14 @@ from tools.question_library import get_practice_questions
 from tools.remoteok_tool import search_remote_jobs
 from tools.resume_tool import read_my_resume
 from tools.resume_scorer import score_my_resume
+from tools.story2star import story2star_coach
 from tools.tracker_tool import append_job_tracker
 from tools.usajobs_tool import search_usajobs
 
 all_search_tools = [
     search_entry_level_roles,
     search_jobs_ddg,
+    search_jobdataapi,
     search_remote_jobs,
     search_usajobs,
 ]
@@ -26,12 +29,12 @@ all_search_tools = [
 hunter = Agent(
     role="Job Hunter",
     goal=(
-        "Find entry-level roles in cybersecurity, software development, "
-        "web development, and network engineering from across the internet."
+        "Find entry-level (0-1 year experience) roles in solution engineering, "
+        "solutions architecture, and developer relations from across the internet."
     ),
     backstory=(
         "You search internet-wide job sources and keep only roles suitable for "
-        "a U.S. permanent resident (non-citizen)."
+        "a U.S. permanent resident (non-citizen) with 1 year of experience or less."
     ),
     tools=all_search_tools,
     llm=llm,
@@ -85,7 +88,14 @@ prep_coach = Agent(
     backstory=(
         "You are a technical interview coach who turns job matches into focused practice."
     ),
-    tools=[run_mock_interview, build_star_answer, score_mock_answer, get_practice_questions, generate_lesson],
+    tools=[
+        run_mock_interview,
+        build_star_answer,
+        story2star_coach,
+        score_mock_answer,
+        get_practice_questions,
+        generate_lesson,
+    ],
     llm=llm,
     function_calling_llm=tool_llm,
     verbose=True,
