@@ -78,7 +78,7 @@ def search_yc_jobs(role_category: str = "software-engineer") -> str:
 
     items: list[dict] = []
     for job in jobs or []:
-        link = str(job.get("url") or job.get("apply_url") or job.get("link") or "").strip()
+        link = str(job.get("job_url") or job.get("url") or job.get("apply_url") or job.get("link") or "").strip()
         if not link or is_tracked_link(link, tracked_links):
             continue
         title = str(job.get("title") or "")
