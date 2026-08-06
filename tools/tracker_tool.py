@@ -1,6 +1,7 @@
 import csv
 import datetime as dt
 import os
+import re
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 import requests
@@ -42,6 +43,28 @@ UNAVAILABLE_PAGE_TERMS = (
     "position is closed",
     "application period has ended",
 )
+
+
+_COMPANY_SUFFIX_RE = re.compile(r"\b(inc|llc|corp|corporation|co|ltd|company)\b\.?", re.IGNORECASE)
+_NON_ALNUM_RE = re.compile(r"[^a-z0-9]+")
+
+
+def _normalize_company(company: str) -> str:
+    text = _COMPANY_SUFFIX_RE.sub(" ", (company or "").lower())
+    return " ".join(_NON_ALNUM_RE.sub(" ", text).split())
+
+
+def _normalize_title(title: str) -> str:
+    # Drop trailing descriptors after " - " or "," (e.g. "- MLOps & Real-Time
+    # Data Integration", ", Commercial") — different job boards / reposts often
+    # tack these on to an otherwise identical role, so keep only the core title.
+    text = (title or "").lower().split(" - ")[0].split(",")[0]
+    text = text.replace("solutions", "solution")
+    return " ".join(_NON_ALNUM_RE.sub(" ", text).split())
+
+
+def role_key(company: str, title: str) -> str:
+    return f"{_normalize_company(company)}::{_normalize_title(title)}"
 
 
 def normalize_job_link(link: str) -> str:
@@ -114,7 +137,7 @@ def _ensure_dashboard_csv(category: str) -> str:
     return path
 
 
-def _collect_links_from_csv(path: str, links: set[str]) -> None:
+def _collect_from_csv(path: str, links: set[str], role_keys: set[str]) -> None:
     if not os.path.exists(path):
         return
     with open(path, "r", newline="", encoding="utf-8") as file:
@@ -126,19 +149,34 @@ def _collect_links_from_csv(path: str, links: set[str]) -> None:
                 links.add(normalized)
             if raw:
                 links.add(raw)
+            company = row.get("company") or ""
+            title = row.get("title") or ""
+            if company.strip() and title.strip():
+                role_keys.add(role_key(company, title))
 
 
-def load_tracked_links() -> set[str]:
+def _load_tracked_state() -> tuple[set[str], set[str]]:
     _ensure_tracker()
     links: set[str] = set()
-    _collect_links_from_csv(TRACKER_PATH, links)
+    role_keys: set[str] = set()
+    _collect_from_csv(TRACKER_PATH, links, role_keys)
     # site/data/*.csv is git-tracked and shared across machines/CI, unlike the
     # gitignored TRACKER_PATH, so it's the only reliable cross-environment
     # record of jobs already surfaced on the dashboard.
     if os.path.isdir(DASHBOARD_DATA_DIR):
         for category in (*ROLE_CATEGORIES.keys(), OTHER_CATEGORY):
-            _collect_links_from_csv(_dashboard_csv_path(category), links)
+            _collect_from_csv(_dashboard_csv_path(category), links, role_keys)
+    return links, role_keys
+
+
+def load_tracked_links() -> set[str]:
+    links, _ = _load_tracked_state()
     return links
+
+
+def load_tracked_role_keys() -> set[str]:
+    _, role_keys = _load_tracked_state()
+    return role_keys
 
 
 def is_tracked_link(link: str, tracked_links: set[str] | None = None) -> bool:
@@ -147,6 +185,13 @@ def is_tracked_link(link: str, tracked_links: set[str] | None = None) -> bool:
     links = tracked_links if tracked_links is not None else load_tracked_links()
     normalized = normalize_job_link(link)
     return link in links or normalized in links
+
+
+def is_tracked_role(company: str, title: str, tracked_role_keys: set[str] | None = None) -> bool:
+    if not (company or "").strip() or not (title or "").strip():
+        return False
+    keys = tracked_role_keys if tracked_role_keys is not None else load_tracked_role_keys()
+    return role_key(company, title) in keys
 
 
 def is_job_link_active(
@@ -221,6 +266,8 @@ def append_job_tracker_row(
     normalized = normalize_job_link(apply_link)
     if is_tracked_link(apply_link):
         return f"Skipped duplicate: {title} at {company}"
+    if is_tracked_role(company, title):
+        return f"Skipped duplicate role (already have {title} at {company}, different link)"
     if not is_job_link_active(normalized or apply_link):
         return f"Skipped inactive link: {title} at {company}"
     row = {
