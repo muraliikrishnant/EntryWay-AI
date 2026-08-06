@@ -17,11 +17,13 @@ from tools.resume_scorer import score_my_resume
 from tools.story2star import story2star_coach
 from tools.tracker_tool import append_job_tracker
 from tools.usajobs_tool import search_usajobs
+from tools.yc_jobs_tool import search_yc_jobs
 
 all_search_tools = [
     search_entry_level_roles,
     search_jobs_ddg,
     search_jobdataapi,
+    search_yc_jobs,
     search_remote_jobs,
     search_usajobs,
 ]

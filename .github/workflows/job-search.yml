@@ -28,6 +28,7 @@ jobs:
       USAJOBS_API_KEY: ${{ secrets.USAJOBS_API_KEY }}
       USAJOBS_EMAIL: ${{ secrets.USAJOBS_EMAIL }}
       CLEANJOBDATA: ${{ secrets.CLEANJOBDATA }}
+      PARSE_YC_API_KEY: ${{ secrets.PARSE_YC_API_KEY }}
       RESUME_PATH: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.resume_filename != '') && format('data/resumes/{0}', github.event.inputs.resume_filename) || 'data/Muralii_Krishnan_Thirumalai_Resume copy.pdf' }}
       SEARCH_KEYWORDS: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.keywords) || '' }}
       TOP_N_JOBS: "15"

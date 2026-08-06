@@ -33,6 +33,9 @@ You must:
 - prioritize web-wide sources (LinkedIn, Indeed, Glassdoor, employer ATS pages, job boards)
 - also call search_jobdataapi once per role (it has a very tight rate limit, so call it
   sparingly — one query per role, not per variant)
+- also call search_yc_jobs once (role_category="software-engineer") to surface YC-backed
+  startup roles — it only supports broad role categories, not free-text search, so call it
+  once total for this task, not once per role
 - keep search scope to U.S.-wide and remote-friendly roles
 - only keep roles requiring a maximum of 1 year of professional experience (0-1 YOE);
   exclude any role that asks for 2+ years of experience or "senior"/"mid-level" roles
