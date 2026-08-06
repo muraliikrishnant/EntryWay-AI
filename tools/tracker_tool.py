@@ -7,6 +7,8 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 import requests
 from crewai.tools import tool
 
+from tools.workday_tool import is_workday_job_active, is_workday_link
+
 TRACKER_PATH = "output/job_tracker.csv"
 DASHBOARD_DATA_DIR = "site/data"
 ROLE_CATEGORIES: dict[str, tuple[str, ...]] = {
@@ -206,6 +208,16 @@ def is_job_link_active(
 
     if cache is not None and normalized in cache:
         return cache[normalized]
+
+    # Workday career pages are JS-rendered, so the plain HTML scrape below
+    # can't see "no longer accepting applications" text — it only sees the
+    # empty shell. Prefer the Workday API's can_apply flag when available.
+    if is_workday_link(normalized):
+        workday_active = is_workday_job_active(normalized)
+        if workday_active is not None:
+            if cache is not None:
+                cache[normalized] = workday_active
+            return workday_active
 
     request_timeout = timeout or int(os.getenv("LINK_CHECK_TIMEOUT_SECONDS", "12"))
     headers = {"User-Agent": "JobSearchAgent/1.0"}
