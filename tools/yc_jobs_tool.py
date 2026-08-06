@@ -6,9 +6,8 @@ from crewai.tools import tool
 
 from tools.duckduckgo_jobs import (
     DISQUALIFY_CITIZEN_ONLY_TERMS,
-    ENTRY_LEVEL_TERMS,
-    EXPERIENCE_DISQUALIFY_TERMS,
     PERMANENT_RESIDENT_FRIENDLY_TERMS,
+    is_entry_level_text,
 )
 from tools.tracker_tool import is_job_link_active, is_tracked_link, normalize_job_link
 
@@ -24,12 +23,6 @@ ROLE_CATEGORY_HINTS = {
 
 def _joined_text(title: str, location: str) -> str:
     return f"{title} {location}".lower()
-
-
-def _is_entry_level(text: str) -> bool:
-    if not any(term in text for term in ENTRY_LEVEL_TERMS):
-        return False
-    return not any(term in text for term in EXPERIENCE_DISQUALIFY_TERMS)
 
 
 def _eligible_for_permanent_resident(text: str) -> bool:
@@ -84,7 +77,7 @@ def search_yc_jobs(role_category: str = "software-engineer") -> str:
         title = str(job.get("title") or "")
         location = str(job.get("location") or "")
         text = _joined_text(title, location)
-        if not _is_entry_level(text):
+        if not is_entry_level_text(title, location):
             continue
         if not _eligible_for_permanent_resident(text):
             continue

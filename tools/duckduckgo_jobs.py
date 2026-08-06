@@ -1,11 +1,31 @@
 import json
 import os
+import re
 
 from ddgs import DDGS
 from crewai.tools import tool
 
 from tools.tracker_tool import is_job_link_active, is_tracked_link, normalize_job_link
 
+# Seniority markers that disqualify a role outright when they appear in the
+# TITLE. Checked against the title only — bodies routinely mention "senior
+# leadership", "reports to the manager", etc. on genuine entry-level postings.
+SENIOR_TITLE_TERMS = (
+    "senior",
+    "sr",
+    "staff",
+    "principal",
+    "expert",
+    "lead",
+    "manager",
+    "director",
+    "head",
+    "vp",
+    "vice president",
+    "ii",
+    "iii",
+    "iv",
+)
 ENTRY_LEVEL_TERMS = (
     "entry level",
     "entry-level",
@@ -109,11 +129,33 @@ def _joined_text(record: dict) -> str:
     ).lower()
 
 
-def _is_entry_level(record: dict) -> bool:
-    text = _joined_text(record)
-    if not any(term in text for term in ENTRY_LEVEL_TERMS):
+def _has_term(text: str, term: str) -> bool:
+    """
+    Whole-word match. Plain substring matching produced false positives like
+    "level i" inside "every level in the organization" or "travel level is",
+    which let senior roles through the entry-level filter.
+    """
+    return re.search(rf"(?<!\w){re.escape(term)}(?!\w)", text) is not None
+
+
+def is_entry_level_text(title: str, body: str = "") -> bool:
+    """
+    Shared entry-level test used by every job source so they filter identically.
+    A seniority marker in the title disqualifies outright; otherwise the title
+    or body must carry an entry-level signal and no 2+ years requirement.
+    """
+    title_text = (title or "").lower()
+    if any(_has_term(title_text, term) for term in SENIOR_TITLE_TERMS):
+        return False
+    text = f"{title_text} {(body or '').lower()}"
+    if not any(_has_term(text, term) for term in ENTRY_LEVEL_TERMS):
         return False
     return not any(term in text for term in EXPERIENCE_DISQUALIFY_TERMS)
+
+
+def _is_entry_level(record: dict) -> bool:
+    body = " ".join([str(record.get("snippet", "")), str(record.get("description", ""))])
+    return is_entry_level_text(str(record.get("title", "")), body)
 
 
 def _is_likely_job_posting(record: dict) -> bool:

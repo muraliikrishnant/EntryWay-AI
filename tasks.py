@@ -30,7 +30,13 @@ Search internet-wide for entry-level roles posted recently (prefer last 10 days)
 {role_lines}
 
 You must:
-- prioritize web-wide sources (LinkedIn, Indeed, Glassdoor, employer ATS pages, job boards)
+- call search_entry_level_roles once per role FIRST — this is the primary tool. It runs
+  site-scoped queries against employer ATS hosts (greenhouse.io, lever.co, workdayjobs.com,
+  etc.) and returns individual job postings.
+- use search_jobs_ddg only as a secondary fallback, and keep its queries SIMPLE (e.g.
+  "junior solutions engineer greenhouse"). Complex boolean queries with quotes, OR, minus
+  terms and after: dates mostly return aggregator search-listing pages (Indeed/LinkedIn
+  search results), which are correctly discarded as non-postings and yield nothing.
 - also call search_jobdataapi once per role (it has a very tight rate limit, so call it
   sparingly — one query per role, not per variant)
 - also call search_yc_jobs once (role_category="software-engineer") to surface YC-backed
