@@ -30,7 +30,12 @@ Search internet-wide for entry-level roles posted recently (prefer last 10 days)
 {role_lines}
 
 You must:
-- call search_entry_level_roles once per role FIRST — this is the primary tool. It runs
+- call search_greenhouse once FIRST (no arguments needed). Greenhouse hosts the largest
+  share of the roles this search turns up, and it returns complete structured listings
+  straight from employer boards rather than scraped search pages. It already filters to
+  US, entry-level and not-yet-seen jobs, so treat everything it returns as a strong
+  candidate. It self-maintains its board watchlist — no arguments to tune.
+- call search_entry_level_roles once per role — this is the primary web-wide tool. It runs
   site-scoped queries against employer ATS hosts (greenhouse.io, lever.co, workdayjobs.com,
   etc.) and returns individual job postings.
 - use search_jobs_ddg only as a secondary fallback, and keep its queries SIMPLE (e.g.

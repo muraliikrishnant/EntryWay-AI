@@ -5,6 +5,7 @@ from tools.answer_builder import build_star_answer
 from tools.answer_scorer import score_mock_answer
 from tools.cover_letter_tool import save_cover_letter
 from tools.duckduckgo_jobs import search_entry_level_roles, search_jobs_ddg
+from tools.greenhouse_tool import search_greenhouse
 from tools.jobdataapi_tool import search_jobdataapi
 from tools.lesson_generator import generate_lesson
 from tools.mock_interview import run_mock_interview
@@ -20,6 +21,7 @@ from tools.usajobs_tool import search_usajobs
 from tools.yc_jobs_tool import search_yc_jobs
 
 all_search_tools = [
+    search_greenhouse,
     search_entry_level_roles,
     search_jobs_ddg,
     search_jobdataapi,
