@@ -149,11 +149,6 @@
       <button class="action" id="uploadBtn">Upload</button>
     </div>
     <div class="field-row">
-      <label for="resumeSelect">Use resume</label>
-      <select id="resumeSelect"><option value="">Default resume</option></select>
-      <button class="action" id="refreshResumesBtn" type="button">Refresh list</button>
-    </div>
-    <div class="field-row">
       <label for="keywords">Role keywords</label>
       <input type="text" id="keywords" placeholder="e.g. product manager, technical account manager (leave blank for default 3 categories)" />
     </div>
@@ -272,11 +267,13 @@
 
   init();
 
-  // --- Control panel: password, resume upload/select, run trigger, status ---
+  // --- Control panel: password, resume upload, run trigger, status ---
   const PW_STORAGE_KEY = "entryway_site_password";
   const pwInput = document.getElementById("pw");
   const statusMsg = document.getElementById("statusMsg");
-  const resumeSelect = document.getElementById("resumeSelect");
+  // Set by a successful upload so the next run uses that file; empty means the
+  // run falls back to the default resume committed in the repo.
+  let uploadedResume = "";
 
   pwInput.value = localStorage.getItem(PW_STORAGE_KEY) || "";
 
@@ -300,27 +297,6 @@
     });
   }
 
-  async function loadResumes() {
-    try {
-      const res = await fetch("/api/resumes");
-      const data = await res.json();
-      if (!res.ok) {
-        setStatus([data.error, data.hint].filter(Boolean).join(" — "), "error");
-        return;
-      }
-      resumeSelect.innerHTML = '<option value="">Default resume</option>';
-      (data.resumes || []).forEach((name) => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        resumeSelect.appendChild(opt);
-      });
-    } catch {
-      setStatus("Could not load resume list.", "error");
-    }
-  }
-
-  document.getElementById("refreshResumesBtn").onclick = loadResumes;
 
   document.getElementById("uploadBtn").onclick = async () => {
     const password = currentPassword();
@@ -338,9 +314,8 @@
       });
       const data = await res.json();
       if (!res.ok) throw new Error([data.error, data.hint].filter(Boolean).join(" — ") || "Upload failed");
-      setStatus(`Uploaded ${data.filename}.`, "ok");
-      await loadResumes();
-      resumeSelect.value = data.filename;
+      uploadedResume = data.filename;
+      setStatus(`Uploaded ${data.filename} — the next run will use it.`, "ok");
     } catch (err) {
       setStatus(err.message || "Upload failed.", "error");
     }
@@ -355,7 +330,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Site-Password": password },
         body: JSON.stringify({
-          resumeFilename: resumeSelect.value || "",
+          resumeFilename: uploadedResume,
           keywords: document.getElementById("keywords").value.trim(),
         }),
       });
@@ -382,8 +357,6 @@
       setStatus(err.message || "Status check failed.", "error");
     }
   };
-
-  loadResumes();
 </script>
 </body>
 </html>
