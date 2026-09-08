@@ -12,7 +12,14 @@ module.exports = async (req, res) => {
     `/repos/${owner}/${name}/actions/workflows/job-search.yml/runs?per_page=1`
   );
   if (!runsRes.ok) {
-    return res.status(502).json({ error: "Failed to fetch run status" });
+    const hint =
+      runsRes.status === 401 || runsRes.status === 403
+        ? "GH_PAT is invalid, expired, or lacks Actions access — update it in Vercel."
+        : "";
+    return res.status(502).json({
+      error: `Failed to fetch run status (GitHub ${runsRes.status})`,
+      hint,
+    });
   }
   const data = await runsRes.json();
   const run = (data.workflow_runs || [])[0];

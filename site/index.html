@@ -335,7 +335,7 @@
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Trigger failed");
+      if (!res.ok) throw new Error([data.error, data.hint].filter(Boolean).join(" — ") || "Trigger failed");
       setStatus("Run triggered — this can take several minutes. Use “Check last run status” or refresh the page later.", "ok");
     } catch (err) {
       setStatus(err.message || "Trigger failed.", "error");
@@ -347,7 +347,7 @@
     try {
       const res = await fetch("/api/status");
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Status check failed");
+      if (!res.ok) throw new Error([data.error, data.hint].filter(Boolean).join(" — ") || "Status check failed");
       if (data.status === "none") return setStatus("No runs yet.");
       statusMsg.innerHTML =
         `Last run: ${data.status}${data.conclusion ? " (" + data.conclusion + ")" : ""} — started ${data.created_at}` +

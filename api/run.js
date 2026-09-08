@@ -35,7 +35,19 @@ module.exports = async (req, res) => {
 
   if (dispatchRes.status !== 204) {
     const details = await dispatchRes.text();
-    return res.status(502).json({ error: "Failed to trigger workflow", details });
+    let hint = "";
+    if (dispatchRes.status === 401) {
+      hint = "GH_PAT is invalid or expired — create a new fine-grained token and update it in Vercel.";
+    } else if (dispatchRes.status === 403) {
+      hint = "GH_PAT lacks Actions: Read and write on this repo.";
+    } else if (dispatchRes.status === 404) {
+      hint = "Workflow job-search.yml or the repo wasn't found — check GH_REPO and that the workflow exists on main.";
+    }
+    return res.status(502).json({
+      error: `Failed to trigger workflow (GitHub ${dispatchRes.status})`,
+      hint,
+      details: details.slice(0, 300),
+    });
   }
 
   return res.status(200).json({ ok: true });
