@@ -11,7 +11,35 @@ from tools.workday_tool import is_workday_job_active, is_workday_link
 
 TRACKER_PATH = "output/job_tracker.csv"
 DASHBOARD_DATA_DIR = "site/data"
+# Order matters: the first category whose term matches the title wins, so the
+# most specific ones come first ("Forward Deployed Solutions Engineer" should
+# land in FDE, not solution engineering).
 ROLE_CATEGORIES: dict[str, tuple[str, ...]] = {
+    "forward_deployed_engineer": (
+        "forward deployed engineer",
+        "forward-deployed engineer",
+        "forward deployed software engineer",
+        "forward-deployed software engineer",
+        "forward deployed",
+        "forward-deployed",
+        "fde",
+    ),
+    "ai_engineer": (
+        "ai engineer",
+        "a.i. engineer",
+        "ai/ml engineer",
+        "ai ml engineer",
+        "applied ai engineer",
+        "applied scientist",
+        "generative ai engineer",
+        "gen ai engineer",
+        "genai engineer",
+        "llm engineer",
+        "machine learning engineer",
+        "ml engineer",
+        "ai software engineer",
+        "ai research engineer",
+    ),
     "solution_engineering": ("solution engineer", "solutions engineer", "sales engineer"),
     "solutions_architect": ("solution architect", "solutions architect"),
     "developer_relations": ("developer relations", "developer advocate", "devrel", "dev rel"),
@@ -119,10 +147,13 @@ def _ensure_tracker() -> None:
 
 
 def classify_role_category(title: str) -> str:
+    # Whole-word matching: short terms like "fde" and "ml engineer" would
+    # otherwise match inside unrelated words.
     text = (title or "").lower()
     for category, terms in ROLE_CATEGORIES.items():
-        if any(term in text for term in terms):
-            return category
+        for term in terms:
+            if re.search(rf"(?<!\w){re.escape(term)}(?!\w)", text):
+                return category
     return OTHER_CATEGORY
 
 

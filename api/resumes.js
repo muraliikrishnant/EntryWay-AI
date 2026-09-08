@@ -14,7 +14,19 @@ module.exports = async (req, res) => {
       return res.status(200).json({ resumes: [] });
     }
     if (!listRes.ok) {
-      return res.status(502).json({ error: "Failed to list resumes" });
+      // Surface the upstream reason — a 401/403 here almost always means the
+      // GH_PAT is missing the "Contents" permission (Actions alone is enough
+      // to trigger a run, but not to read or write files).
+      const details = await listRes.text();
+      const hint =
+        listRes.status === 401 || listRes.status === 403
+          ? "GH_PAT is missing repo Contents access (needs Contents: Read and write), or the token expired."
+          : "";
+      return res.status(502).json({
+        error: `Failed to list resumes (GitHub ${listRes.status})`,
+        hint,
+        details: details.slice(0, 300),
+      });
     }
     const files = await listRes.json();
     const resumes = (Array.isArray(files) ? files : [])
@@ -55,7 +67,15 @@ module.exports = async (req, res) => {
 
     if (!putRes.ok) {
       const details = await putRes.text();
-      return res.status(502).json({ error: "Failed to save resume", details });
+      const hint =
+        putRes.status === 401 || putRes.status === 403
+          ? "GH_PAT is missing repo Contents access (needs Contents: Read and write), or the token expired."
+          : "";
+      return res.status(502).json({
+        error: `Failed to save resume (GitHub ${putRes.status})`,
+        hint,
+        details: details.slice(0, 300),
+      });
     }
     return res.status(200).json({ ok: true, filename: safeName });
   }

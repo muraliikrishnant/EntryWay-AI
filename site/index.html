@@ -173,6 +173,8 @@
     { key: "solution_engineering", label: "Solution Engineering", file: "data/jobs_solution_engineering.csv" },
     { key: "solutions_architect", label: "Solutions Architect", file: "data/jobs_solutions_architect.csv" },
     { key: "developer_relations", label: "Developer Relations", file: "data/jobs_developer_relations.csv" },
+    { key: "ai_engineer", label: "AI Engineer", file: "data/jobs_ai_engineer.csv" },
+    { key: "forward_deployed_engineer", label: "Forward Deployed Eng", file: "data/jobs_forward_deployed_engineer.csv" },
     { key: "other", label: "Other / Custom Search", file: "data/jobs_other.csv" },
   ];
 
@@ -302,6 +304,10 @@
     try {
       const res = await fetch("/api/resumes");
       const data = await res.json();
+      if (!res.ok) {
+        setStatus([data.error, data.hint].filter(Boolean).join(" — "), "error");
+        return;
+      }
       resumeSelect.innerHTML = '<option value="">Default resume</option>';
       (data.resumes || []).forEach((name) => {
         const opt = document.createElement("option");
@@ -331,7 +337,7 @@
         body: JSON.stringify({ filename: file.name, fileBase64 }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Upload failed");
+      if (!res.ok) throw new Error([data.error, data.hint].filter(Boolean).join(" — ") || "Upload failed");
       setStatus(`Uploaded ${data.filename}.`, "ok");
       await loadResumes();
       resumeSelect.value = data.filename;

@@ -7,6 +7,8 @@ DEFAULT_ROLES = [
     "solution engineer / solutions engineer",
     "solution architect / solutions architect",
     "developer relations / developer advocate",
+    "AI engineer / applied AI engineer / machine learning engineer",
+    "forward deployed engineer / forward deployed software engineer (FDE)",
 ]
 
 
@@ -50,6 +52,8 @@ You must:
 - keep search scope to U.S.-wide and remote-friendly roles
 - only keep roles requiring a maximum of 1 year of professional experience (0-1 YOE);
   exclude any role that asks for 2+ years of experience or "senior"/"mid-level" roles
+- new-grad / campus / early-career programs DO count and should be kept
+- exclude internships, co-ops and apprenticeships — full-time roles only
 - exclude jobs requiring U.S. citizenship only
 - keep jobs that are clearly friendly to permanent residents or do not impose citizenship-only constraints
 - skip any role whose link already exists in output/job_tracker.csv

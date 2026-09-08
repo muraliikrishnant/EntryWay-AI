@@ -1,6 +1,8 @@
 import datetime as dt
+import re
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from tools.interview_utils import extract_json_array, slugify
 from tools.outreach_generator import build_outreach_markdown
@@ -11,8 +13,47 @@ def _company(item: dict[str, Any]) -> str:
     return str(item.get("company") or item.get("company/agency") or "Unknown").strip()
 
 
+UNTITLED = "Untitled role"
+
+
 def _title(item: dict[str, Any]) -> str:
-    return str(item.get("title") or "Untitled role").strip()
+    return str(item.get("title") or UNTITLED).strip()
+
+
+def _title_from_link(link: str) -> str:
+    """
+    Last-resort title recovered from an apply-link slug, e.g.
+    ".../entry-level-technical-solutions-engineer-at-epic-4377638688"
+    -> "Entry Level Technical Solutions Engineer".
+    """
+    # Walk back over trailing numeric segments — many boards put the id last
+    # and the title in the segment before it (".../Solution-Architect/58502").
+    segments = [s for s in urlsplit(link or "").path.split("/") if s]
+    slug = ""
+    for segment in reversed(segments):
+        if not segment.isdigit():
+            slug = segment
+            break
+    words = [w for w in re.split(r"[-_]+", slug) if w and not w.isdigit()]
+    if "at" in words:  # drop the trailing "-at-<company>" suffix
+        index = words.index("at")
+        if index >= 2:
+            words = words[:index]
+    if len(words) < 2:
+        return ""
+    return " ".join(word.capitalize() for word in words)
+
+
+def _resolve_title(scored: dict[str, Any], original: dict[str, Any], link: str) -> str:
+    """
+    The scoring agent sometimes drops the title from its JSON, which used to
+    persist a useless "Untitled role" row. Fall back to the job found in the
+    search step, then to the apply link's slug.
+    """
+    for candidate in (_title(scored), _title(original), _title_from_link(link)):
+        if candidate and candidate != UNTITLED:
+            return candidate
+    return UNTITLED
 
 
 def _score(item: dict[str, Any]) -> int:
@@ -73,10 +114,12 @@ def build_daily_digest(
 
     for scored in scored_jobs:
         original = _find_job(scored, jobs)
-        title = _title(scored)
-        company = _company(scored)
         location = str(scored.get("location") or original.get("location") or "Not specified")
         apply_link = str(scored.get("apply_link") or original.get("apply_link") or original.get("link") or "")
+        title = _resolve_title(scored, original, apply_link)
+        company = _company(scored)
+        if company == "Unknown":
+            company = _company(original)
         if apply_link:
             tracker_results.append(
                 append_job_tracker_row(

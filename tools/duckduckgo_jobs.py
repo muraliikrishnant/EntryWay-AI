@@ -36,7 +36,30 @@ ENTRY_LEVEL_TERMS = (
     "level i",
     "new grad",
     "new graduate",
+    "recent graduate",
     "trainee",
+    # New-grad / campus hiring programs count as entry level.
+    "graduate program",
+    "graduate programme",
+    "rotational program",
+    "campus hire",
+    "university graduate",
+    "early career",
+    "early-career",
+)
+# Internships, co-ops and apprenticeships are entry level but are not the
+# full-time roles being searched for, so they're excluded outright.
+NON_FULLTIME_TERMS = (
+    "intern",
+    "interns",
+    "internship",
+    "co-op",
+    "coop",
+    "co op",
+    "apprentice",
+    "apprenticeship",
+    "summer analyst",
+    "work study",
 )
 EXPERIENCE_DISQUALIFY_TERMS = (
     "2+ years",
@@ -146,6 +169,8 @@ def is_entry_level_text(title: str, body: str = "") -> bool:
     """
     title_text = (title or "").lower()
     if any(_has_term(title_text, term) for term in SENIOR_TITLE_TERMS):
+        return False
+    if any(_has_term(title_text, term) for term in NON_FULLTIME_TERMS):
         return False
     text = f"{title_text} {(body or '').lower()}"
     if not any(_has_term(text, term) for term in ENTRY_LEVEL_TERMS):

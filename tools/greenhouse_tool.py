@@ -42,23 +42,30 @@ US_LOCATION_HINTS = (
     "remote, us",
 )
 NON_US_HINTS = (
-    "india",
-    "canada",
-    "united kingdom",
-    "london",
-    "germany",
-    "france",
-    "spain",
-    "poland",
-    "bulgaria",
-    "israel",
-    "australia",
-    "singapore",
-    "japan",
-    "brazil",
-    "mexico",
-    "netherlands",
-    "ireland",
+    # countries
+    "india", "canada", "united kingdom", "germany", "france", "spain",
+    "portugal", "poland", "bulgaria", "romania", "czech", "austria",
+    "switzerland", "sweden", "norway", "denmark", "finland", "italy",
+    "greece", "israel", "australia", "new zealand", "singapore", "japan",
+    "south korea", "china", "taiwan", "thailand", "vietnam", "philippines",
+    "malaysia", "indonesia", "brazil", "mexico", "argentina", "chile",
+    "colombia", "peru", "south africa", "nigeria", "kenya", "egypt",
+    "turkey", "ukraine", "netherlands", "ireland", "belgium", "emirates",
+    "u.k.", "emea", "apac", "latam",
+    # cities — a bare foreign city name carries no country suffix to catch
+    "bengaluru", "bangalore", "mumbai", "new delhi", "hyderabad", "pune",
+    "chennai", "gurgaon", "noida", "kolkata", "toronto", "vancouver",
+    "montreal", "ottawa", "calgary", "london", "manchester", "edinburgh",
+    "dublin", "berlin", "munich", "hamburg", "paris", "lyon", "madrid",
+    "barcelona", "lisbon", "amsterdam", "brussels", "zurich", "geneva",
+    "vienna", "prague", "warsaw", "krakow", "budapest", "bucharest",
+    "sofia", "stockholm", "oslo", "copenhagen", "helsinki", "milan",
+    "rome", "athens", "tel aviv", "jerusalem", "dubai", "sydney",
+    "melbourne", "brisbane", "auckland", "tokyo", "osaka", "seoul",
+    "shanghai", "beijing", "shenzhen", "hong kong", "taipei", "bangkok",
+    "jakarta", "manila", "kuala lumpur", "ho chi minh", "sao paulo",
+    "mexico city", "buenos aires", "bogota", "santiago", "lima",
+    "cape town", "johannesburg", "nairobi", "cairo", "istanbul", "kyiv",
 )
 US_STATE_CODES = frozenset(
     """AL AK AZ AR CA CO CT DE FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN
@@ -183,7 +190,10 @@ def _is_us_location(location: str) -> bool:
         return True
     if re.search(r"(?<!\w)(" + "|".join(US_STATE_CODES).lower() + r")(?!\w)", text):
         return True
-    return "remote" in text
+    # No positive non-US signal was found. Default to keeping the job (a bare
+    # "Seattle" or "Remote" would otherwise be dropped) and let the scoring
+    # agent judge — losing real US roles is worse than passing one through.
+    return True
 
 
 def _eligible_for_permanent_resident(text: str) -> bool:
